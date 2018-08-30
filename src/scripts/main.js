@@ -1,7 +1,7 @@
 function getJSON(callback){
   const xhttp = new XMLHttpRequest();
   xhttp.overrideMimeType("application/json");
-  xhttp.open('GET', '../groceries.json', true);
+  xhttp.open('GET', 'build/groceries.json', true);
   xhttp.onreadystatechange = function() {
     if(xhttp.readyState ==  4 && xhttp.status == 200){
       callback(xhttp.response);

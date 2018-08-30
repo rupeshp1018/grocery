@@ -3,22 +3,41 @@ module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
-    // Tasks
+    // copy plugin
+    copy: {
+      build: {
+        cwd: 'src',
+        src: ['**', '!**/*.scss'],
+        dest: 'build',
+        expand: true
+      },
+    },
+    clean: {
+      build: {
+        src: ['build']
+      },
+      stylesheets: {
+        src: ['build/**/*.css', 'build/stylesheets', '!build/main.min.css']
+      },
+      scripts: {
+        src: ['build/**/*.js', 'build/scripts', '!build/main.min.js']
+      },
+    },
     cjs_jsnext: {
       library: {
         options: {
-          main: 'scripts/main.js',
+          main: 'src/scripts/main.js',
         },
-        dest: 'scripts/'
+        dest: 'src/scripts/'
       }
     },
     sass: { // Begin Sass Plugin
       dist: {
         files: [{
           expand: true,
-          cwd: 'sass',
+          cwd: 'src/stylesheets/sass',
           src: ['*.scss'],
-          dest: 'stylesheets/css',
+          dest: 'build/stylesheets/css',
           ext: '.css'
         }]
       }
@@ -32,81 +51,87 @@ module.exports = function (grunt) {
         ]
       },
       dist: {
-        src: 'stylesheets/css/main.css'
+        src: 'build/stylesheets/css/main.css'
       }
     },
     cssmin: {
-      dist: {
+      build: {
         files: [{
           expand: true,
-          cwd: 'stylesheets/css',
+          cwd: 'build/stylesheets/css',
           src: ['*.css', '!*.min.css'],
-          dest: 'stylesheets/css',
+          dest: 'build/',
           ext: '.min.css'
         }],  
       },          
     },
     uglify: {
-      build: {
-        src: 'scripts/main.js',
-        dest: 'scripts/main.min.js'
+      options: {
+        mangle: false
       },
+      build: {
+        files: {
+          'build/main.min.js': ['build/scripts/main.js']
+        }
+      },
+    },
+    json_bake: {
+      options: {
+
+      },
+      main: {
+        'build/groceries.json': ['build/scripts/json/groceries.json']
+      }
+    },
+    'gh-pages': {
+      options: {
+        base: 'build'
+      },
+      src: ['**']
     },
     watch: { // Compile everything into one task with Watch Plugin
       css: {
-        files: 'sass/**/*.scss',
-        tasks: ['sass:dist', 'postcss','cssmin']
+        files: 'src/stylesheets/sass/**/*.scss',
+        tasks: ['stylesheets']
       },
       js: {
-        files: 'scripts/**/*.js',
-        tasks: ['uglify']
-      }
-    },
-    browserSync: {
-      dev: {
-        bsFiles: {
-          src: [
-            'stylesheets/*.css',
-            'scripts/*.js',
-            '*.html'
-          ]
-        },
-        options: {
-          watchTask: true,
-          server: './'
-        }
-      }
-    },
-    buildcontrol: {
-      options: {
-        dir: 'dist',
-        commit: true,
-        push: true,
-        message: 'Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%'
+        files: 'src/scripts/**/*.js',
+        tasks: ['scripts']
       },
-      pages: {
-        options: {
-          remote: 'git@github.com:rupeshp1018/groceryListWeb.git',
-          branch: 'gh-pages'
-        }
-      },
-      local: {
-        options: {
-          remote: '../',
-          branch: 'build'
-        }
+      copy: {
+        files: ['src/**', 'src/stylesheets/**/*.scss'],
+        tasks: ['copy']
       }
     }
   });
   // Load Grunt plugins
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-bundle-jsnext-lib');
   grunt.loadNpmTasks('grunt-contrib-sass');
   grunt.loadNpmTasks('grunt-postcss');
   grunt.loadNpmTasks('grunt-contrib-cssmin');
   grunt.loadNpmTasks('grunt-contrib-uglify-es');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-browser-sync');
+  grunt.loadNpmTasks('grunt-gh-pages');
+  grunt.loadNpmTasks('grunt-json-bake');
 
   // Register Grunt tasks
-  grunt.registerTask('default', ['browserSync', 'watch']);
+  grunt.registerTask(
+    'stylesheets',
+    'Compiles the stylesheets.',
+    ['sass:dist', 'postcss', 'cssmin', 'clean:stylesheets']
+  );
+  grunt.registerTask(
+    'scripts',
+    'Compiles the JavaScript files.',
+    ['uglify', 'clean:scripts']
+  );
+  grunt.registerTask(
+    'build',
+    'Compiles all of the assets and copies the files to the build directory.',
+    ['clean', 'copy', 'stylesheets', 'json_bake', 'scripts']
+  );
+  grunt.registerTask('default', ['build', 'watch']);
+  grunt.registerTask('deploy', ['gh-pages']);
 };
