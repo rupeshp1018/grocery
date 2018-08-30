@@ -16,12 +16,6 @@ module.exports = function (grunt) {
       build: {
         src: ['build']
       },
-      stylesheets: {
-        src: ['build/**/*.css', 'build/stylesheets', '!build/main.min.css']
-      },
-      scripts: {
-        src: ['build/**/*.js', 'build/scripts', '!build/main.min.js']
-      },
     },
     cjs_jsnext: {
       library: {
@@ -120,12 +114,12 @@ module.exports = function (grunt) {
   grunt.registerTask(
     'stylesheets',
     'Compiles the stylesheets.',
-    ['sass:dist', 'postcss', 'cssmin', 'clean:stylesheets']
+    ['sass:dist', 'postcss', 'cssmin']
   );
   grunt.registerTask(
     'scripts',
     'Compiles the JavaScript files.',
-    ['uglify', 'clean:scripts']
+    ['uglify']
   );
   grunt.registerTask(
     'build',
